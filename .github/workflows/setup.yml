@@ -1,0 +1,66 @@
+name: Prepare Expo project
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get repository
+        uses: actions/checkout@v5
+
+      - name: Extract the uploaded Expo project
+        run: |
+          python3 - <<'PY'
+          import pathlib
+          import shutil
+          import zipfile
+
+          root = pathlib.Path('.')
+          archives = list(root.glob('*.zip'))
+          if len(archives) != 1:
+              raise SystemExit('Expected exactly one ZIP file in the repository root.')
+
+          work = root / '_project'
+          if work.exists():
+              shutil.rmtree(work)
+          work.mkdir()
+
+          with zipfile.ZipFile(archives[0]) as z:
+              for item in z.infolist():
+                  p = pathlib.PurePosixPath(item.filename)
+                  if p.is_absolute() or '..' in p.parts:
+                      raise SystemExit('Unsafe archive path')
+              z.extractall(work)
+
+          folders = [p for p in work.iterdir() if p.is_dir()]
+          project = folders[0] if len(folders) == 1 and (folders[0] / 'package.json').exists() else work
+          if not (project / 'package.json').exists():
+              raise SystemExit('package.json not found')
+
+          for source in project.iterdir():
+              target = root / source.name
+              if source.is_dir() and target.exists() and target.is_dir():
+                  shutil.copytree(source, target, dirs_exist_ok=True)
+                  shutil.rmtree(source)
+              elif target.exists():
+                  raise SystemExit('Destination already exists: ' + source.name)
+              else:
+                  shutil.move(str(source), str(target))
+
+          shutil.rmtree(work, ignore_errors=True)
+          archives[0].unlink()
+          PY
+
+      - name: Save the project
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Import Expo project"
+          git push
