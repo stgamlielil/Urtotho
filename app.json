@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "ממיר עברית וסורית",
+    "slug": "syriac-hebrew-converter",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "owner": "stgamlielils-team",
+    "android": {
+      "package": "org.erez.syriachebrewconverter",
+      "versionCode": 1
+    }
+  }
+}
