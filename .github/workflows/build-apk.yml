@@ -1,0 +1,73 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get project
+        uses: actions/checkout@v5
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Set up Expo and EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install project dependencies
+        run: npm install
+
+      - name: Create or link the EAS project
+        run: eas init --account stgamlielils-team --non-interactive
+
+      - name: Restore Android signing key
+        id: signing-cache
+        uses: actions/cache@v4
+        with:
+          path: .signing
+          key: syriac-hebrew-converter-android-signing-v1
+
+      - name: Create Android signing key once
+        if: steps.signing-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p .signing
+          keytool -genkeypair \
+            -storetype PKCS12 \
+            -keystore .signing/release.keystore \
+            -storepass "SyriacHebrewConverter_2026_APK" \
+            -keypass "SyriacHebrewConverter_2026_APK" \
+            -alias syriachebrewconverter \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=SyriacHebrewConverter, OU=Android, O=SyriacHebrewConverter, L=Jerusalem, C=IL"
+
+      - name: Prepare signing credentials
+        run: |
+          cat > credentials.json <<'JSON'
+          {
+            "android": {
+              "keystore": {
+                "keystorePath": ".signing/release.keystore",
+                "keystorePassword": "SyriacHebrewConverter_2026_APK",
+                "keyAlias": "syriachebrewconverter",
+                "keyPassword": "SyriacHebrewConverter_2026_APK"
+              }
+            }
+          }
+          JSON
+
+      - name: Build APK with Expo
+        run: eas build --platform android --profile apk --non-interactive --wait
