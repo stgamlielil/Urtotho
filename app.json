@@ -4,12 +4,12 @@
     "slug": "syriac-hebrew-converter",
     "version": "1.0.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "owner": "stgamlielils-team",
     "icon": "./icon.png",
     "android": {
       "package": "org.erez.syriachebrewconverter",
-      "versionCode": 1
+      "versionCode": 2
     }
   }
 }
