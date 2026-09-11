@@ -6,6 +6,7 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "owner": "stgamlielils-team",
+    "icon": "./icon.png",
     "android": {
       "package": "org.erez.syriachebrewconverter",
       "versionCode": 1
